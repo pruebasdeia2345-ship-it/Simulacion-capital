@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Flow Capital — Simulador de Ahorro e Inversión</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --surface: #111827;
+      --card: #1e293b;
+      --card-hover: #263349;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.18);
+      --green: #22c55e;
+      --red: #f87171;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: env(safe-area-inset-top, 16px) 16px 40px;
+      line-height: 1.45;
+    }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 12px 0 18px;
+      gap: 12px;
+    }
+    .brand h1 {
+      font-size: 1.45rem;
+      margin: 0;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, #f8fafc, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .brand p { margin: 4px 0 0; font-size: 0.88rem; color: var(--muted); }
+    .badge {
+      background: var(--accent-glow);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+    }
+    .section-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin: 0 0 14px;
+      color: #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+    .field label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.88rem;
+      margin-bottom: 8px;
+      color: #cbd5e1;
+    }
+    .field .val {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 0.95rem;
+      background: rgba(15, 23, 42, 0.6);
+      padding: 2px 8px;
+      border-radius: 8px;
+    }
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      border-radius: 999px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .kpi {
+      background: rgba(11, 17, 32, 0.65);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .kpi .k-label { font-size: 0.75rem; color: var(--muted); }
+    .kpi .k-val { font-size: 1.08rem; font-weight: 700; margin-top: 4px; }
+    .kpi .k-sub { font-size: 0.72rem; margin-top: 2px; color: var(--muted); }
+    canvas {
+      width: 100%;
+      height: 230px;
+      display: block;
+      margin-top: 14px;
+    }
+    .save-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    input[type="text"] {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    input[type="text"]:focus { border-color: var(--accent); }
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: transform 0.1s ease, opacity 0.15s ease;
+    }
+    button:active { transform: scale(0.98); }
+    .btn-primary {
+      background: var(--accent);
+      color: #0b1120;
+    }
+    .btn-ghost {
+      background: rgba(148, 163, 184, 0.14);
+      color: #e2e8f0;
+      padding: 6px 10px;
+      font-size: 0.8rem;
+    }
+    .btn-danger {
+      background: rgba(248, 113, 113, 0.15);
+      color: var(--red);
+      padding: 6px 10px;
+      font-size: 0.8rem;
+    }
+    .scenarios-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .scenario-item {
+      background: rgba(11, 17, 32, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .scenario-info h4 { margin: 0 0 3px; font-size: 0.94rem; color: #f8fafc; }
+    .scenario-info p { margin: 0; font-size: 0.78rem; color: var(--muted); }
+    .scenario-actions { display: flex; gap: 6px; }
+    .empty-state {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      padding: 14px 8px;
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+    }
+    .disclaimer {
+      font-size: 0.76rem;
+      color: var(--muted);
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <h1>Flow Capital</h1>
+        <p>Simulador de Ahorro e Inversión</p>
+      </div>
+      <span class="badge">Interés Compuesto</span>
+    </header>
+
+    <div class="card">
+      <div class="section-title">
+        <span>Parámetros de simulación</span>
+        <button class="btn-ghost" id="btn-reset" type="button">Restablecer</button>
+      </div>
+
+      <div class="grid">
+        <div class="field">
+          <label>Capital inicial <span class="val" id="v-initial">400 €</span></label>
+          <input id="initial" type="range" min="0" max="10000" step="100" value="400" />
+        </div>
+        <div class="field">
+          <label>Aportación mensual <span class="val" id="v-monthly">150 €</span></label>
+          <input id="monthly" type="range" min="0" max="2000" step="25" value="150" />
+        </div>
+        <div class="field">
+          <label>Rendimiento anual (%) <span class="val" id="v-rate">6%</span></label>
+          <input id="rate" type="range" min="-20" max="30" step="1" value="6" />
+        </div>
+        <div class="field">
+          <label>Horizonte (años) <span class="val" id="v-years">3 años</span></label>
+          <input id="years" type="range" min="1" max="10" step="1" value="3" />
+        </div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi">
+          <div class="k-label">Total aportado</div>
+          <div class="k-val" id="kpi-contributed" style="color:#f8fafc">5.800 €</div>
+          <div class="k-sub">Tu bolsillo</div>
+        </div>
+        <div class="kpi">
+          <div class="k-label">Rendimiento</div>
+          <div class="k-val" id="kpi-gain" style="color:#38bdf8">+550 €</div>
+          <div class="k-sub" id="kpi-gain-pct">+9,5%</div>
+        </div>
+        <div class="kpi">
+          <div class="k-label">Capital final</div>
+          <div class="k-val" id="kpi-total" style="color:#22c55e">6.350 €</div>
+          <div class="k-sub" id="kpi-horizon">En 3 años</div>
+        </div>
+      </div>
+
+      <canvas id="chart" width="660" height="230"></canvas>
+
+      <div class="save-row">
+        <input id="scenario-name" type="text" placeholder="Nombre del escenario (ej. Plan conservador)" maxlength="40" />
+        <button class="btn-primary" id="btn-save" type="button">Guardar</button>
+      </div>
+
+      <p class="disclaimer">*Simulación ilustrativa. En negocios o inversiones reales los resultados varían y pueden producirse pérdidas.</p>
+    </div>
+
+    <div class="card">
+      <div class="section-title">
+        <span>Mis escenarios guardados</span>
+        <span id="scenarios-count" style="font-size:0.8rem; color:var(--muted);">0</span>
+      </div>
+      <div class="scenarios-list" id="scenarios-list"></div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'flow_capital_scenarios_v1';
+
+    const els = {
+      initial: document.getElementById('initial'),
+      monthly: document.getElementById('monthly'),
+      rate: document.getElementById('rate'),
+      years: document.getElementById('years'),
+      vInitial: document.getElementById('v-initial'),
+      vMonthly: document.getElementById('v-monthly'),
+      vRate: document.getElementById('v-rate'),
+      vYears: document.getElementById('v-years'),
+      kpiContributed: document.getElementById('kpi-contributed'),
+      kpiGain: document.getElementById('kpi-gain'),
+      kpiGainPct: document.getElementById('kpi-gain-pct'),
+      kpiTotal: document.getElementById('kpi-total'),
+      kpiHorizon: document.getElementById('kpi-horizon'),
+      canvas: document.getElementById('chart'),
+      scenarioName: document.getElementById('scenario-name'),
+      btnSave: document.getElementById('btn-save'),
+      btnReset: document.getElementById('btn-reset'),
+      scenariosList: document.getElementById('scenarios-list'),
+      scenariosCount: document.getElementById('scenarios-count')
+    };
+
+    const fmtEur = (n) => Math.round(n).toLocaleString('es-ES') + ' €';
+
+    function calcSeries(initial, monthly, rate, years) {
+      const points = [];
+      const r = rate / 100 / 12;
+      for (let y = 0; y <= years; y++) {
+        const months = y * 12;
+        const contributed = initial + monthly * months;
+        let total;
+        if (Math.abs(r) < 1e-9) {
+          total = contributed;
+        } else {
+          const factor = Math.pow(1 + r, months);
+          total = initial * factor + monthly * ((factor - 1) / r);
+        }
+        points.push({
+          year: y,
+          contributed: Math.max(0, contributed),
+          total: Math.max(0, total)
+        });
+      }
+      return points;
+    }
+
+    function drawChart(points) {
+      const ctx = els.canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const rect = els.canvas.getBoundingClientRect();
+      const w = rect.width || 660;
+      const h = 230;
+      els.canvas.width = w * dpr;
+      els.canvas.height = h * dpr;
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, w, h);
+
+      const pad = { top: 20, right: 18, bottom: 28, left: 18 };
+      const plotW = w - pad.left - pad.right;
+      const plotH = h - pad.top - pad.bottom;
+
+      const maxVal = Math.max(...points.map(p => Math.max(p.total, p.contributed)), 100);
+
+      // Grid lines
+      ctx.strokeStyle = 'rgba(51, 65, 85, 0.7)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 3; i++) {
+        const y = pad.top + (plotH * i) / 3;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(w - pad.right, y);
+        ctx.stroke();
+      }
+
+      // Contributed dashed line
+      ctx.save();
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      points.forEach((p, idx) => {
+        const x = pad.left + (plotW * idx) / Math.max(points.length - 1, 1);
+        const y = pad.top + plotH - (p.contributed / maxVal) * plotH;
+        if (idx === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+
+      // Total area fill
+      const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + plotH);
+      grad.addColorStop(0, 'rgba(56, 189, 248, 0.30)');
+      grad.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+
+      ctx.beginPath();
+      points.forEach((p, idx) => {
+        const x = pad.left + (plotW * idx) / Math.max(points.length - 1, 1);
+        const y = pad.top + plotH - (p.total / maxVal) * plotH;
+        if (idx === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.lineTo(pad.left + plotW, pad.top + plotH);
+      ctx.lineTo(pad.left, pad.top + plotH);
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Total line
+      ctx.beginPath();
+      points.forEach((p, idx) => {
+        const x = pad.left + (plotW * idx) / Math.max(points.length - 1, 1);
+        const y = pad.top + plotH - (p.total / maxVal) * plotH;
+        if (idx === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Points & X labels
+      ctx.font = '11px -apple-system, sans-serif';
+      points.forEach((p, idx) => {
+        const x = pad.left + (plotW * idx) / Math.max(points.length - 1, 1);
+        const y = pad.top + plotH - (p.total / maxVal) * plotH;
+
+        ctx.beginPath();
+        ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#38bdf8';
+        ctx.fill();
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('Año ' + p.year, x - 14, h - 8);
+      });
+    }
+
+    function update() {
+      const initial = Number(els.initial.value);
+      const monthly = Number(els.monthly.value);
+      const rate = Number(els.rate.value);
+      const years = Number(els.years.value);
+
+      els.vInitial.textContent = fmtEur(initial);
+      els.vMonthly.textContent = fmtEur(monthly);
+      els.vRate.textContent = rate + '%';
+      els.vYears.textContent = years + (years === 1 ? ' año' : ' años');
+
+      const points = calcSeries(initial, monthly, rate, years);
+      const finalVal = points[points.length - 1].total;
+      const contributed = initial + monthly * years * 12;
+      const gain = finalVal - contributed;
+      const gainPct = contributed > 0 ? ((gain / contributed) * 100).toFixed(1).replace('.', ',') : '0,0';
+
+      els.kpiContributed.textContent = fmtEur(contributed);
+      els.kpiTotal.textContent = fmtEur(finalVal);
+      els.kpiHorizon.textContent = 'En ' + years + (years === 1 ? ' año' : ' años');
+
+      els.kpiGain.textContent = (gain >= 0 ? '+' : '') + fmtEur(gain);
+      els.kpiGain.style.color = gain >= 0 ? '#38bdf8' : '#f87171';
+      els.kpiGainPct.textContent = (gain >= 0 ? '+' : '') + gainPct + '%';
+
+      drawChart(points);
+    }
+
+    function getScenarios() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      } catch {
+        return [];
+      }
+    }
+
+    function setScenarios(list) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      renderScenarios();
+    }
+
+    function renderScenarios() {
+      const list = getScenarios();
+      els.scenariosCount.textContent = list.length;
+
+      if (!list.length) {
+        els.scenariosList.innerHTML = '<div class="empty-state">Aún no has guardado ningún escenario. Ajusta los controles arriba y pulsa <strong>Guardar</strong>.</div>';
+        return;
+      }
+
+      els.scenariosList.innerHTML = list.map((s, idx) => `
+        <div class="scenario-item">
+          <div class="scenario-info">
+            <h4>${s.name}</h4>
+            <p>Inicio: ${fmtEur(s.initial)} · Mes: ${fmtEur(s.monthly)} · ${s.rate}% · ${s.years} años → <strong>${fmtEur(s.finalVal)}</strong></p>
+          </div>
+          <div class="scenario-actions">
+            <button class="btn-ghost" type="button" onclick="loadScenario(${idx})">Cargar</button>
+            <button class="btn-danger" type="button" onclick="deleteScenario(${idx})">Borrar</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.loadScenario = function(idx) {
+      const s = getScenarios()[idx];
+      if (!s) return;
+      els.initial.value = s.initial;
+      els.monthly.value = s.monthly;
+      els.rate.value = s.rate;
+      els.years.value = s.years;
+      update();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.deleteScenario = function(idx) {
+      const list = getScenarios();
+      list.splice(idx, 1);
+      setScenarios(list);
+    };
+
+    els.btnSave.addEventListener('click', () => {
+      const initial = Number(els.initial.value);
+      const monthly = Number(els.monthly.value);
+      const rate = Number(els.rate.value);
+      const years = Number(els.years.value);
+      const points = calcSeries(initial, monthly, rate, years);
+      const finalVal = points[points.length - 1].total;
+
+      const rawName = els.scenarioName.value.trim();
+      const name = rawName || `Escenario #${getScenarios().length + 1}`;
+
+      const list = getScenarios();
+      list.unshift({ id: Date.now(), name, initial, monthly, rate, years, finalVal });
+      setScenarios(list);
+      els.scenarioName.value = '';
+    });
+
+    els.btnReset.addEventListener('click', () => {
+      els.initial.value = 400;
+      els.monthly.value = 150;
+      els.rate.value = 6;
+      els.years.value = 3;
+      update();
+    });
+
+    ['initial', 'monthly', 'rate', 'years'].forEach(k => {
+      els[k].addEventListener('input', update);
+    });
+
+    window.addEventListener('resize', update);
+    update();
+    renderScenarios();
+  </script>
+</body>
+</html>
